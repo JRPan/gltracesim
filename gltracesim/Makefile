@@ -1,4 +1,4 @@
-PIN_HOME:=ext/pin-2.14-71313-gcc.4.4.7-linux
+PIN_HOME:=ext/pin-2
 MESA_HOME:=ext/mesa
 PROTO_HOME:=ext/protobuf/install
 PROTOC:=$(PROTO_HOME)/bin/protoc

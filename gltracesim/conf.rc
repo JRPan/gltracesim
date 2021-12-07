@@ -1,5 +1,5 @@
 # Set up your base path here
-BASE=/home/uart/gltracesim/gltracesim/ext
+BASE=/home/pan251/gltracesim/gltracesim/ext
 BASE_LOCAL=$BASE/local
 
 export PYTHONPATH=$BASE_LOCAL/lib/python2.7/site-packages/:$PYTHONPATH
@@ -23,3 +23,8 @@ export PYTHONPATH="${LOCAL_ROOT}/protobuf/python/build/lib.linux-x86_64-2.7:${PY
 # Compiling with this protobuf implementation
 export CFLAGS="-pthread -I$BASE_LOCAL/include"
 export LDFLAGS="-pthread -L$BASE_LOCAL/lib -lprotobuf -lpthreads"
+
+export PIN_HOME="/home/pan251/gltracesim/gltracesim/ext/pin-2"
+# export APITRACE_HOME="/home/pan251/emerald/apitrace/build"
+export APITRACE_HOME="/home/pan251/apitrace/apitrace/build"
+export LD_LIBRARY_PATH="/home/pan251/gltracesim/gltracesim/ext/mesa-18.0.0/src/gallium/auxiliary/.libs/:${LD_LIBRARY_PATH}"
