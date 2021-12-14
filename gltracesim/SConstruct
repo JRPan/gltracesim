@@ -144,6 +144,7 @@ def configure_mesa(env):
   env.Append(LIBPATH = [
    os.path.join(os.environ["MESA_HOME"], 'build', 'linux-x86_64', 'util'),
    os.path.join(os.environ["MESA_HOME"], 'build', 'linux-x86_64', 'gallium', 'auxiliary'),
+   os.path.join(os.environ["MESA_HOME"], 'src', 'util', '.libs'),
   ])
 
   env.Append(CXXFLAGS = [
@@ -169,6 +170,8 @@ def configure_pin(env):
    os.path.join(os.environ["PIN_HOME"], 'source', 'include', 'pin', 'gen'),
    os.path.join(os.environ["PIN_HOME"], 'extras', 'components', 'include'),
    os.path.join(os.environ["PIN_HOME"], 'extras', 'xed-intel64', 'include'),
+   os.path.join(os.environ["PIN_HOME"], 'extras', 'crt', 'include'),
+   os.path.join(os.environ["PIN_HOME"], 'extras', 'crt', 'include','kernel','uapi'),
   ])
 
   env.Append(CXXFLAGS = [

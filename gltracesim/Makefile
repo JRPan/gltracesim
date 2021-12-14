@@ -46,6 +46,5 @@ obj-intel64/gltrace_sim.so: obj-intel64/gltrace_sim.pb.o obj-intel64/gltrace_sim
 	g++ -o $@ $^ $(_LDFLAGS) $(LDFLAGS)
 
 clean:
-	rm obj-intel64/*.o
-	rm obj-intel64/*.so
-	rm src/*.pb.*
+	rm -rf ./build/*
+	rm -f ./libgltracesim.so

@@ -253,6 +253,7 @@ def main():
 
     # Pin cmd
     cmd += [os.path.join(os.environ['PIN_HOME'], 'pin')]
+    cmd +=["-injection child -ifeellucky"]
     cmd += args.pin_flags.split()
 
     # Tool cmd

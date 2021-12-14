@@ -26,5 +26,5 @@ export LDFLAGS="-pthread -L$BASE_LOCAL/lib -lprotobuf -lpthreads"
 
 export PIN_HOME="/home/pan251/gltracesim/gltracesim/ext/pin-2"
 # export APITRACE_HOME="/home/pan251/emerald/apitrace/build"
-export APITRACE_HOME="/home/pan251/apitrace/apitrace/build"
-export LD_LIBRARY_PATH="/home/pan251/gltracesim/gltracesim/ext/mesa-18.0.0/src/gallium/auxiliary/.libs/:${LD_LIBRARY_PATH}"
+export APITRACE_HOME="/home/pan251/apitrace/build"
+export LD_LIBRARY_PATH="/home/pan251/gltracesim/gltracesim/ext/mesa/src/gallium/auxiliary/.libs/:${LD_LIBRARY_PATH}"
