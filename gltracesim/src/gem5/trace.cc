@@ -150,7 +150,7 @@ CmdTraceGenerator::process(const packet_t &pkt)
     {
         //
         std::cout << trace_data.job_id() << std::endl;
-        assert(trace_data.has_job_id());
+        // assert(trace_data.has_job_id());
         //
         trace_data.set_cmd(OpenGlCMD);
         trace_data.set_dev_id(pkt.dev_id);
@@ -277,6 +277,7 @@ CmdTraceGenerator::process(const packet_t &pkt)
         return;
     }
     default:
+        printf("INVALID cmd: %u\n",pkt.cmd);
         assert(0);
     }
 

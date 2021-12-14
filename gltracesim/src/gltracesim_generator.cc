@@ -588,6 +588,7 @@ GlTraceSim::handle_gpu_resource_create(int tid, struct llvmpipe_resource *lpr)
         gpu_resource->addr_range.size() / 1048576.0,
         gpu_resource->get_target_name()
     );
+    if (gpu_resource->addr_range.start != 0) {
 
     //
     system->rt->add(gpu_resource);
@@ -613,6 +614,9 @@ GlTraceSim::handle_gpu_resource_create(int tid, struct llvmpipe_resource *lpr)
 
     //
     pipe->analysis_queue->push(pkt);
+    } else {
+        DPRINTF(GpuResourceEvent, "UNKNOWN addr: 0x0\n");
+    }
 
     //
     rw_mtx.unlock();
@@ -647,6 +651,7 @@ GlTraceSim::handle_gpu_resource_destroy(int tid, struct llvmpipe_resource *lpr)
             tid, pipe->get_gid(tid),
             gpu_resource->addr_range.start
         );
+        if (gpu_resource->addr_range.start == 0) {
 
         if (config.get("dump-resources", false).asBool()) {
             gpu_resource->dump_jpeg_image();
@@ -674,6 +679,9 @@ GlTraceSim::handle_gpu_resource_destroy(int tid, struct llvmpipe_resource *lpr)
 
         //
         pipe->analysis_queue->push(pkt);
+        } else {
+        DPRINTF(GpuResourceEvent, "UNKNOWN addr: 0x0\n");
+        }
 
     } else {
         printf("handle_gpu_resource_destroy error %p.\n", (void*)addr);
@@ -1452,9 +1460,9 @@ GlTraceSim::process_filter_buffer_item(int fid, packet_t &pkt)
     filter_cache->tick++;
 
     //
-    FilterCache::entry_t *fce, *fcre;
+    // FilterCache::entry_t *fce, *fcre;
     //
-    filter_cache->find(pkt.vaddr, fce, fcre);
+    // filter_cache->find(pkt.vaddr, fce, fcre);
 
     // Calc block index into GPU resource
     uint64_t blk_idx = gpu_resource->get_blk_idx(pkt.vaddr);
@@ -1474,38 +1482,49 @@ GlTraceSim::process_filter_buffer_item(int fid, packet_t &pkt)
         gpu_resource->get_mipmap_level(pkt.vaddr)
     );
 
-    if (_l(fce)) {
-        assert(fce->valid);
+    // if (_l(fce)) {
+    //     assert(fce->valid);
 
-        // Set LRU
-        fce->last_tsc = filter_cache->tick;
-        // Update state
-        fce->dirty |= (pkt.cmd == WRITE);
+    //     // Set LRU
+    //     fce->last_tsc = filter_cache->tick;
+    //     // Update state
+    //     fce->dirty |= (pkt.cmd == WRITE);
 
-        // Hit, nothing else to do.
-        return;
-    }
+    //     // Hit, nothing else to do.
+    //     return;
+    // }
 
     // Miss
 
     // Evict blk
-    if (_u(fcre->valid && fcre->dirty)) {
+    if (1) {
+    // if (_u(fcre->valid && fcre->dirty)) {
         //
-        GpuResourcePtr fcre_gpu_resource =
-            system->rt->find_id(fcre->rsc_id);
+        // GpuResourcePtr fcre_gpu_resource =
+        //     system->rt->find_id(fcre->rsc_id);
 
-        assert(fcre_gpu_resource);
-        assert(fcre_gpu_resource->id == uint64_t(fcre->rsc_id));
+        // assert(fcre_gpu_resource);
+        // assert(fcre_gpu_resource->id == uint64_t(fcre->rsc_id));
 
         // Record in buffer
         packet_t apkt;
         apkt.dev_id = pkt.dev_id;
-        apkt.vaddr = fcre->addr;
-        apkt.paddr = fcre->paddr;
+        apkt.vaddr = pkt.vaddr;
+        apkt.paddr = system->vmem_manager->translate(pkt.vaddr);
+        // if (pkt.cmd == WRITE) {
+        //     assert(pkt.paddr == 0);
+        //     apkt.paddr = system->vmem_manager->translate(pkt.vaddr);
+        //     if (apkt.paddr == 0) {
+        //         abort();
+        //     }
+        // }
+        // else  {
+        //     apkt.paddr = pkt.paddr;
+        // }
         apkt.tid = fid;
-        apkt.cmd = WRITE;
-        apkt.rsc_id = fcre->rsc_id;
-        apkt.job_id = fcre->job_id;
+        apkt.cmd = pkt.cmd;
+        apkt.rsc_id = pkt.rsc_id;
+        apkt.job_id = pkt.job_id;
         apkt.length = filter_cache->params.blk_size;
 
         //
@@ -1515,53 +1534,54 @@ GlTraceSim::process_filter_buffer_item(int fid, packet_t &pkt)
         stats[fid].no_rsc_offcore_mops[pkt.dev_id]++;
 
         // Calc block index into GPU resource
-        uint64_t blk_idx = fcre_gpu_resource->get_blk_idx(fcre->addr);
+        uint64_t blk_idx = gpu_resource->get_blk_idx(pkt.vaddr);
+        // uint64_t blk_idx = fcre_gpu_resource->get_blk_idx(fcre->addr);
 
         // Not thread safe, so approximate
-        fcre_gpu_resource->frame_stats.gpu_write_blks++;
-        fcre_gpu_resource->blk_state[blk_idx].gpu_write_touched = 1;
+        gpu_resource->frame_stats.gpu_write_blks++;
+        gpu_resource->blk_state[blk_idx].gpu_write_touched = 1;
 
         // Dead but not yet a zombie, resurect it.
-        if (fcre_gpu_resource->dead && fcre_gpu_resource->zombie == false) {
-            system->rt->resurrect(fcre_gpu_resource);
+        if (gpu_resource->dead && gpu_resource->zombie == false) {
+            system->rt->resurrect(gpu_resource);
         }
     }
 
     // Insert blk
-    fcre->valid = true;
-    fcre->dirty = (pkt.cmd == WRITE);
-    fcre->addr = pkt.vaddr;
-    fcre->paddr = system->vmem_manager->translate(pkt.vaddr);
-    fcre->last_tsc = filter_cache->tick;
-    fcre->rsc_id = gpu_resource->id;
-    fcre->job_id = pkt.job_id;
+    // fcre->valid = true;
+    // fcre->dirty = (pkt.cmd == WRITE);
+    // fcre->addr = pkt.vaddr;
+    // fcre->paddr = system->vmem_manager->translate(pkt.vaddr);
+    // fcre->last_tsc = filter_cache->tick;
+    // fcre->rsc_id = gpu_resource->id;
+    // fcre->job_id = pkt.job_id;
 
     // Assume we write whole cacheline
-    if (_u(pkt.cmd == WRITE &&
-           filter_cache->params.fetch_on_wr_miss == false)) {
-        // Do nothing, only install, no fetch
-    } else {
-        // Miss, record in buffer
-        packet_t apkt;
-        apkt.cmd = READ;
-        apkt.vaddr = pkt.vaddr;
-        apkt.paddr = fcre->paddr;
-        apkt.length = filter_cache->params.blk_size;
-        apkt.tid = fid;
-        apkt.rsc_id = gpu_resource->id;
-        apkt.job_id = pkt.job_id;
-        apkt.dev_id = pkt.dev_id;
+    // if (_u(pkt.cmd == WRITE &&
+    //        filter_cache->params.fetch_on_wr_miss == false)) {
+    //     // Do nothing, only install, no fetch
+    // } else {
+    //     // Miss, record in buffer
+    //     packet_t apkt;
+    //     apkt.cmd = READ;
+    //     apkt.vaddr = pkt.vaddr;
+    //     apkt.paddr = fcre->paddr;
+    //     apkt.length = filter_cache->params.blk_size;
+    //     apkt.tid = fid;
+    //     apkt.rsc_id = gpu_resource->id;
+    //     apkt.job_id = pkt.job_id;
+    //     apkt.dev_id = pkt.dev_id;
 
-        //
-        ts[fid].job->trace->process(apkt);
+    //     //
+    //     ts[fid].job->trace->process(apkt);
 
-        //
-        stats[fid].no_rsc_offcore_mops[pkt.dev_id]++;
+    //     //
+    //     stats[fid].no_rsc_offcore_mops[pkt.dev_id]++;
 
-        // Not thread safe, so approximate
-        gpu_resource->frame_stats.gpu_read_blks++;
-        gpu_resource->blk_state[blk_idx].gpu_read_touched = 1;
-    }
+    //     // Not thread safe, so approximate
+    //     gpu_resource->frame_stats.gpu_read_blks++;
+    //     gpu_resource->blk_state[blk_idx].gpu_read_touched = 1;
+    // }
 }
 
 void
@@ -1769,6 +1789,13 @@ handle_pin_instruction(INS ins, VOID *v)
     if ((INS_IsStackRead(ins) || INS_IsStackWrite(ins)) &&
         (gltracesim::simulator->config.get("ignore-stack-ops", false).asBool()))
     {
+        return;
+    }
+
+    if(INS_Mnemonic(ins) == "XSAVEC") {
+        return;
+    }
+    if(INS_Mnemonic(ins) == "XRSTOR") {
         return;
     }
 

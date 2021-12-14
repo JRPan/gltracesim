@@ -74,6 +74,10 @@ VirtualMemoryManager::alloc(const AddrRange &vaddr_range)
     uint64_t start_vpage = get_page_addr(vaddr_range.start);
     uint64_t end_vpage = get_page_addr(vaddr_range.end);
 
+    if (start_vpage == 0) {
+        abort();
+    }
+
     DPRINTF(VirtualMemoryManager, "Allocating range [0x%x -> 0x%x].\n",
         vaddr_range.start, vaddr_range.end
     );
