@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
 import sys, io
+sys.path.append("../gltracesim/proto")
+sys.path.append("../gltracesim/proto/gem5")
+
 import packet_pb2 as packet
 import stats.cache_pb2 as cache
 import stream

@@ -1,6 +1,8 @@
 #!/usr/bin/python
 
 import sys, io
+sys.path.append("../gltracesim/proto")
+sys.path.append("../gltracesim/proto/gem5")
 import packet_pb2 as packet
 import frame_pb2 as frame
 import stream
